@@ -537,14 +537,63 @@ double dLmag ( double zCMB, double zHEL,
   mu     = 5.0 * log10( arg );
 
   if ( ANISOTROPY_INFO->USE_FLAG ) {
+    double H0 = HzFUN_INFO->COSPAR_LIST[ICOSPAR_HzFUN_H0];
     double GLON = ANISOTROPY_INFO->GLON;
     double GLAT = ANISOTROPY_INFO->GLAT;
+    double qm = ANISOTROPY_INFO->qm;
+    double qd = ANISOTROPY_INFO->qd;
+    double S_dipole = ANISOTROPY_INFO->S; 
+    double J0_dipole = ANISOTROPY_INFO->J0;
+    
+       
     // xxx for S. Sah to complete
+    //starting the function definition  : Taylor expanded luminosity distance for titlted universe 
+    // Model taken from paper  arXiv:gr-qc/0309109v4 
+    
+    dl= (LIGHT_km*zHEL/H0)*(1.0+1.0/2.0*(1-q_dipole(zHEL,ANISOTROPY_INFO))*zHEL-(1.0/6.0)*(1-q_dipole(zHEL,ANISOTROPY_INFO)-3*pow(q_dipole(zHEL,ANISOTROPY_INFO),2)+J0_dipole)*pow(zHEL,2));
+    arg    = dl / (10.0 * PC_km);
+    mu     = 5.0 * log10( arg );
+
+    
+    
   }
 
   return mu ;
 }  // end of dLmag
 
+
+// dipolar q for tilted cosmology
+double F_dipole(double zHEL,ANISOTROPY_INFO_DEF *ANISOTROPY_INFO) {
+    double S_dipole = ANISOTROPY_INFO->S; 
+
+    return exp(-zHEL/S_dipole);
+}
+
+
+double angular_separation(ANISOTROPY_INFO_DEF *ANISOTROPY_INFO) {
+    double lon1 = ANISOTROPY_INFO->GLON;
+    double lat1 = ANISOTROPY_INFO->GLAT;
+    double lon2 = 264.021 *PI/180;
+    double lat2 = 48.253*PI/180;
+    double dlon = lon2 - lon1;
+    double dlat = lat2 - lat1;
+    double a = pow(sin(dlat/2), 2) + cos(lat1) * cos(lat2) * pow(sin(dlon/2), 2);
+    double c = 2 * atan2(sqrt(a), sqrt(1-a));
+    double sep = c * 180 / PI;
+    return sep;
+    
+}
+    
+
+
+double q_dipole(double zHEL,ANISOTROPY_INFO_DEF *ANISOTROPY_INFO){
+    double q_dipole,angular_seperation;
+    double qm = ANISOTROPY_INFO->qm;
+    double qd = ANISOTROPY_INFO->qd;
+    double sep = angular_separation(ANISOTROPY_INFO);
+    q_dipole = qm + qd*F_dipole(zHEL,ANISOTROPY_INFO)*cos(sep);
+    return q_dipole
+}
 
 // ******************************************
 double dlmag_fortc__(double *zCMB, double *zHEL, double *H0,
